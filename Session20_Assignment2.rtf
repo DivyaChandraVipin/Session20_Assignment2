@@ -1,0 +1,114 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Times New Roman;}{\f1\froman\fcharset0 Times New Roman;}{\f2\fnil\fcharset0 Segoe UI Semibold;}{\f3\fnil\fcharset2 Symbol;}}
+{\colortbl ;\red0\green0\blue255;}
+{\*\generator Riched20 10.0.14393}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\qj\f0\fs28\lang9\par
+Android_Session20_Assignment2(Debugging and Deployment)\par
+---------------------------------------------------------\par
+\b\fs32 a)What is null pointer Exception?\par
+
+\pard\sb100\sa100\b0\fs24\lang1033 Thrown when an application attempts to use null in a case where an object is required. These include: \par
+
+\pard{\pntext\f3\'B7\tab}{\*\pn\pnlvlblt\pnf3\pnindent360{\pntxtb\'B7}}\fi-360\li720\sb100\sa100 Calling the instance method of a null object. \par
+{\pntext\f3\'B7\tab}Accessing or modifying the field of a null object. \par
+{\pntext\f3\'B7\tab}Taking the length of null as if it were an array. \par
+{\pntext\f3\'B7\tab}Accessing or modifying the slots of null as if it were an array. \par
+{\pntext\f3\'B7\tab}Throwing null as if it were a Throwable value. \par
+
+\pard\sb100\sa100 Applications should throw instances of this class to indicate other illegal uses of the null object. NullPointerExceptions are exceptions that occur when you try to use a reference that points to no location in memory (null) as though it were referencing an object. Calling a method on a null reference or trying to access a field of a null reference will trigger a NullPointerException. Probably the quickest example code I could come up with to illustrate a NullPointerException would be:\par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631 public class Example\par
+\{\par
+    public static void main(String[] args)\par
+    \{\par
+        Object obj = null;\par
+        obj.hashCode();\par
+    \}\par
+\}\par
+
+\pard\sb100\sa100 On the first line inside main I'm explicitly setting the Object reference obj equal to null. This means I have a reference, but it isn't pointing to any object. After that, I try to treat the reference as though it points to an object by calling a method on it. This results in a NullPointerException because there is no code to execute in the location that the reference is pointing.\par
+\f1\par
+
+\pard\sa200\sl276\slmult1\qj\b\f0\fs28\lang9 b)When \ldblquote Unable to add window to Activity\'85. Is your Activity running\rdblquote  error occurs? \par
+
+\pard\sa200\sl276\slmult1\ul\f2 User Experience:\ulnone\par
+
+\pard\sb100\sa100\b0\f0\fs24\lang1033 After publishing one of our apps on Google Play market I started receiving strange exception on Play Console:\par
+android.view.WindowManager$BadTokenException: Unable to add window -- token android.os.BinderProxy@40b47bd8 is not valid; is your activity running? at android.view.ViewRoot.setView(ViewRoot.java:452) at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:283) at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:193) at android.view.WindowManagerImpl$CompatModeWrapper.addView(WindowManagerImpl.java:118) at android.view.Window$LocalWindowManager.addView(Window.java:532) at android.app.Dialog.show(Dialog.java:269)\par
+This exception occurred while app was trying to notify user from the background thread by opening a Dialog.\par
+It is possible for my app to try notifying the user while being in the background (device screen is locked, app is sent to background with home button).\par
+{{\field{\*\fldinst{HYPERLINK "http://developer.android.com/reference/android/app/Activity.html#isFinishing()"}}{\fldrslt{\ul\cf1\cf1\ul isFinishing()}}}}\f0\fs24  which is called by Android when Activity enters finishing stage: be it explicit finish() call or activity clean up made by Android.\par
+Using that flag it is very easy to avoid opening dialog from background thread when Activity is finishing\par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631 runOnUiThread(new Runnable() \{\par
+   @Override\par
+   public void run() \{\par
+\tab if(!isFinishing())\{\par
+\tab\tab showDialog (\par
+\tab\tab\tab         new AlertDialog.Builder(MainActivity.this)\par
+\tab\tab\tab\tab .setTitle(R.string.dialogTitle)\par
+\tab\tab\tab\tab .setMessage(R.string.dialogText)\par
+\tab\tab\tab\tab .setCancelable(false)\par
+\tab\tab\tab\tab .setPositiveButton(R.string.txtOk, \par
+\tab\tab\tab\tab new OnClickListener() \{\par
+\tab\tab\tab\tab\tab @Override\par
+\tab\tab\tab\tab\tab public void onClick(DialogInterface dialog, int which) \{\par
+                                          // whatever...\tab\tab\tab\tab\tab\tab\par
+\tab\tab\tab\tab\tab\}\par
+\tab\tab\tab\tab\})\par
+\tab\tab\tab\tab .create()\par
+\tab\tab\tab      );\par
+\tab    \}\par
+   \}\par
+\});\par
+
+\pard\sb100\sa100\b\f1\fs32 c)What is ArrayIndexOutOfBound Exception? \b0\fs24\par
+\f0 This exception is thrown when you try to access an array item that doesn't exist:\par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631 String [] myArray = new String[2];\par
+\par
+myArray[2] = "something"; // Throws exception\par
+myArray[-1] = "something"; // Throws exception\par
+
+\pard\sb100\sa100 You should check that your index is not negative and not higher than the array length before accessing an array item.\par
+Most of the time it is because someone asks for the size of an array (length) and then tries to read the last item as array[length]. But arrays start at \b 0\b0 , so the last you can read is array[length-1]\par
+\b\fs32 d)\ldblquote Activity not found? Have you declared this activity in your manifest file\rdblquote ? \b0\fs24\par
+         Whatever activity we are creating we have to declare in Android Manifest.It is necessary to declare all the activities in manifest because it presents essential information about your app to the Android system, information the system must have before it can run any of the app's code\f1 .\par
+\b\fs32 e)No such method getColor() found? \b0\fs24\par
+\f0 getResources().getColor(R.color.color_name) is now deprecated in API Level 23 \par
+You can either perform an API level check and call the appropriate method, or you can use ContextCompat.getColor(Context, int) from the support-v4 library.\par
+The Resources.getColor(int id) method has been deprecated.\par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631 @ColorInt\par
+@Deprecated\par
+public int getColor(@ColorRes int id) throws NotFoundException \{\par
+    return getColor(id, null);\par
+\}\par
+
+\pard\sb100\sa100 Starting from Android Support Library 23, a new {{\field{\*\fldinst{HYPERLINK "http://developer.android.com/reference/android/support/v4/content/ContextCompat.html#getColor(android.content.Context,%20int)"}}{\fldrslt{\ul\cf1\cf1\ul getColor()}}}}\f0\fs24  method has been added to ContextCompat.\par
+So, just call:\par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631 ContextCompat.getColor(context, R.color.your_color);\par
+
+\pard\sb100\sa100 Description from the official JavaDoc:\par
+
+\pard\li360\ri360\sb100\sa100 Returns a color associated with a particular resource ID\par
+Starting in M, the returned color will be styled for the specified Context's theme.\par
+
+\pard\sb100\sa100 This is the ContextCompat.getColor() {{\field{\*\fldinst{HYPERLINK "https://github.com/android/platform_frameworks_support/blob/master/v4/java/android/support/v4/content/ContextCompat.java"}}{\fldrslt{\ul\cf1\cf1\ul source code}}}}\f0\fs24  from the Support Library:\par
+
+\pard\tx959\tx1918\tx2877\tx3836\tx4795\tx5754\tx6713\tx7672\tx8631 public static final int getColor(Context context, int id) \{\par
+    final int version = Build.VERSION.SDK_INT;\par
+    if (version >= 23) \{\par
+        return ContextCompatApi23.getColor(context, id);\par
+    \} else \{\par
+        return context.getResources().getColor(id);\par
+    \}\par
+\}\par
+
+\pard\sb100\sa100\par
+\par
+\par
+
+\pard\sa200\sl276\slmult1\lang9\par
+}
+ 
